@@ -102,8 +102,6 @@ def make_features_extended12(features_j1, features_j2, label_arr, set):
 			warnings.filterwarnings("ignore", message="divide by zero encountered in true_divide")
 			warnings.filterwarnings("ignore", message="invalid value encountered in true_divide")
 			inputs = 12
-			if add_pt:
-				inputs+=2
 			features = np.zeros((len(m_jj), inputs))
 			features[:,0] = m_jj * 1e-3
 			features[:,1] = features_j1[:, 3] * 1e-3
@@ -111,9 +109,6 @@ def make_features_extended12(features_j1, features_j2, label_arr, set):
 			for i in range(4):
 				features[:,3+2*i] = features_j1[:,5+i]/features_j1[:,4+i]
 				features[:,3+2*i+1] = features_j2[:,5+i]/features_j2[:,4+i]
-			if add_pt:
-				features[:,-3] = np.sqrt(features_j1[:,0]**2+features_j1[:,1]**2)
-				features[:,-2] = np.sqrt(features_j2[:,0]**2+features_j2[:,1]**2)
 			features[:,-1] = label_arr
 
 	return np.nan_to_num(features)
@@ -196,6 +191,93 @@ def file_loading(filename, args, labels=True, signal=0):
     return features
 
 def classifier_data_prep(args, samples=None):
+    data = file_loading(args.data_file, args)
+    extra_bkg = file_loading(args.extrabkg_file, args, labels=False)
+    if args.signal_file is not None: 
+        data_signal = file_loading(args.signal_file, args, labels=False, signal=1)
+
+    if args.signal_file is not None: 
+        sig = data_signal
+    else:
+        sig = data[data[:,-1]==1]
+    bkg = data[data[:,-1]==0]
+
+    # ADD SIGNAL OPTIONS
+    if args.signal_percentage is None:
+        n_sig = 1000
+    else:
+        n_sig = int(args.signal_percentage*1000/0.6361658645922605)
+    print("n_sig=", n_sig)
+
+    data_all = np.concatenate((bkg,sig[:n_sig]),axis=0)
+    np.random.seed(args.set_seed)
+    np.random.shuffle(data_all)
+    extra_sig = sig[n_sig:]
+    innersig_mask = (extra_sig[:,0]>args.minmass) & (extra_sig[:,0]<args.maxmass)
+    inner_extra_sig = extra_sig[innersig_mask]
+
+    innermask = (data_all[:,0]>args.minmass) & (data_all[:,0]<args.maxmass)
+    innerdata = data_all[innermask]
+
+    extrabkg1 = extra_bkg[:312858]
+    extrabkg2 = extra_bkg[312858:]
+
+    samples_train = extrabkg1[40000:]
+
+    if args.mode=="supervised":
+        if not args.supervised_normal_signal:
+            sig_train = inner_extra_sig[20000:]
+        else: 
+            sig_train = innerdata[:120000]
+            sig_train = innerdata[:60000]
+        X_train = np.concatenate((samples_train, sig_train), axis=0)
+        Y_train = X_train[:,-1]
+        if args.gaussian_inputs:
+            gauss = np.random.normal(size=(len(X_train),args.inputs-args.N_normal_inputs))
+            X_train = np.concatenate((X_train[:,1:args.N_normal_inputs+1],gauss), axis=1)
+        else:
+            X_train = X_train[:,1:args.inputs+1]
+    elif args.mode=="IAD":
+        if args.gaussian_inputs:
+            X_train = np.concatenate((innerdata[:60000,1:args.N_normal_inputs+1],samples_train[:,1:args.N_normal_inputs+1]),axis=0)
+            gauss = np.random.normal(size=(len(X_train),args.inputs-args.N_normal_inputs))
+            X_train = np.concatenate((X_train,gauss), axis=1)
+            print(X_train.shape)
+        else:
+            X_train = np.concatenate((innerdata[:60000,1:args.inputs+1],samples_train[:,1:args.inputs+1]),axis=0)
+        Y_train = np.concatenate((np.ones(len(X_train)-len(samples_train)),np.zeros(len(samples_train))),axis=0)		
+    else: 
+        raise ValueError('Wrong --args.mode given')
+
+    X_test = np.concatenate((extrabkg2,inner_extra_sig[:20000],extrabkg1[:40000]))
+    Y_test = to_categorical(X_test[:,-1],2)
+    if args.gaussian_inputs:
+        gauss = np.random.normal(size=(len(X_test),args.inputs-args.N_normal_inputs))
+        X_test = np.concatenate((X_test[:,1:args.N_normal_inputs+1],gauss), axis=1)
+    else:
+        X_test = X_test[:,1:args.inputs+1]
+
+    X_train, Y_train = shuffle_XY(X_train, to_categorical(Y_train,2))
+
+    if args.cl_norm:
+        if args.cl_logit:
+            normalisation = logit_norm(X_train)
+        else:
+            normalisation = no_logit_norm(X_train)
+        X_train, _ = normalisation.forward(X_train)
+        X_test, _ = normalisation.forward(X_test)
+
+    print("Train set: ", len(X_train), "; Test set: ", len(X_test))
+
+    np.save(args.directory+"X_train.npy", X_train)
+    np.save(args.directory+"X_test.npy", X_test)
+    np.save(args.directory+"Y_train.npy", Y_train)
+    np.save(args.directory+"Y_test.npy", Y_test)
+
+    return X_train, Y_train, X_test, Y_test
+
+
+def data_prep_2D(args, samples=None):
     data = file_loading(args.data_file, args)
     extra_bkg = file_loading(args.extrabkg_file, args, labels=False)
     if args.signal_file is not None: 

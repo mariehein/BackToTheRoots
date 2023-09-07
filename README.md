@@ -32,7 +32,7 @@ Performed for:
 
 Performed for:
 - X in ["BDT", "NN"]
-- A in ["extended1", "extended2", "extended3"] (note "baseline" already performed for baseline performance comparisons)
+- A in ["extended1", "extended2", "extended3"] (Note: "baseline" already performed for baseline performance comparisons)
 
 ```
     python run_pipeline.py --mode "IAD" --classifier X --input_set A --directory "results/IAD_X_A/" 
@@ -41,8 +41,8 @@ Performed for:
 ### 1D scan for classifier X and input_set A:
 
 Performed for:
-- X="BDT" and A in ["baseline", "extended3", "kitchensink"]
-- X="NN" and A="baseline"
+- X = "BDT" and A in ["baseline", "extended3", "kitchensink"]
+- X = "NN" and A = "baseline"
 
 ```
     sig = (0 100 200 300 400 500 750 1000 1200 1500 2000)
@@ -54,7 +54,8 @@ Performed for:
 ### 2D scan
 
 Performed for:
-- X="BDT" and A in ["baseline", "kitchensink"]
+- X = "BDT"
+- A in ["baseline", "kitchensink"]
 
 ```
     bkg=(25000 50000 75000 100000 125000 150000 175000 200000)
@@ -62,8 +63,7 @@ Performed for:
 
     for b in ${bkg}; do
         for s in ${sig} do
-            python run_pipeline_2D.py --mode "IAD" --classifier X --input_set A --randomize_seed --signal_significance ${s} --N_CR ${b} --N_bkg ${b} --directory "results/2D_X_A/${b}_${b}_${s}/"
-            sbatch 2D_scan_IAD.slurm ${bkg[i]} ${bkg[i]} ${sig[j]} "${bkg[i]}_${bkg[i]}_${sig[j]}/"
+            python run_pipeline.py --mode "IAD" --classifier X --input_set A --randomize_seed --2D_scan --signal_significance ${s} --N_bkg ${b} --directory "results/2D_X_A/${b}_${b}_${s}/"
         done
     done
 ```
