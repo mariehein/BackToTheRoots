@@ -17,7 +17,7 @@ def classifier_training(X_train, Y_train, X_test, Y_test, args, run):
     for j in range(args.ensemble_over):
         print("Tree number:", args.ensemble_over*run+j)
         np.random.seed(run*args.ensemble_over+j+1)
-        tree = HistGradientBoostingClassifier(verbose=1, max_iter=200, max_leaf_nodes=31, validation_fraction= 0.5)
+        tree = HistGradientBoostingClassifier(verbose=1, max_iter=200, max_leaf_nodes=31, validation_fraction=0.5)
         results_f = tree.fit(X_train, Y_train[:,1], sample_weight=class_weights)
         test_results[j] = tree.predict_proba(X_test)[:,1]
         print("AUC last epoch: %.3f" % pf.plot_roc(test_results[j], Y_test[:,1],title="roc_classifier",directory=args.directory))

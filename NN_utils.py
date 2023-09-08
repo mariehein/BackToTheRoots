@@ -30,7 +30,7 @@ def make_model(activation="relu",hidden=3,inputs=4,lr=1e-3,dropout=0.1, l1=0, l2
 	)
 	return model
 
-def classifier_training(args, X_train, Y_train, X_test, Y_test, run, direc_run=None):
+def classifier_training(X_train, Y_train, X_test, Y_test, args, run, direc_run=None):
 	if direc_run is None:	
 		direc_run=args.directory
 	
