@@ -15,7 +15,6 @@ def plot_training(history,title="training", directory=None):
 	else:
 		plt.savefig(directory+"training_train.pdf")
 	plt.show()
-
 	plt.figure()
 	plt.plot(history.history["val_loss"])
 	plt.title(title)

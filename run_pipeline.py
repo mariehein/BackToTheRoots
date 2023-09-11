@@ -12,7 +12,7 @@ parser = argparse.ArgumentParser(
 parser.add_argument('--mode', type=str, choices=["IAD", "supervised"], required=True)
 parser.add_argument('--directory', type=str, required=True)
 parser.add_argument('--classifier', type=str, choices=["BDT", "NN"], required=True)
-parser.add_argument('--input_set', type=str, choices=["baseline","extended1","extended2","extended3","kitchensink"])
+parser.add_argument('--input_set', type=str, choices=["baseline","extended1","extended2","extended3","kitchensink", "kitchensink_super"])
 parser.add_argument('--gaussian_inputs', type=int, default=None)
 
 #Data files
@@ -67,6 +67,8 @@ elif args.input_set=="extended3":
     args.inputs=56
 elif args.input_set=="kitchensink":
     args.inputs=72
+elif args.input_set=="kitchensink_super":
+    args.inputs=104
 
 if args.three_pronged:
 	args.signal_file = "/hpcwork/rwth0934/LHCO_dataset/extratau2/events_anomalydetection_Z_XY_qqq.extratau_2.features.h5"

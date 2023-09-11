@@ -138,6 +138,14 @@ def make_features_extended3(pandas_file, label_arr, set):
             for i in range(len(names)-1):
                 ratios[:,l, i]=np.array(pandas_file[names[i+1]], dtype=np.float32)/np.array(pandas_file[names[i]], dtype=np.float32)
 
+    if set=="kitchensink_super":
+        ratios = np.zeros((len(m_jj), 2, (to_subjettiness-1)*3))
+        for k,b in enumerate(beta):
+            for l, j in enumerate(jet):
+                names = ["tau"+str(i)+j+"_"+str(b) for i in range(1,to_subjettiness+1)]
+                for i in range(len(names)-1):
+                    ratios[:,l, k*(to_subjettiness-1)+i]=np.array(pandas_file[names[i+1]], dtype=np.float32)/np.array(pandas_file[names[i]], dtype=np.float32)
+
     ind_not = np.argwhere(features_j1[:,3]> features_j2[:,3])
     f_j1 = np.copy(features_j1)
     features_j1[ind_not] = features_j2[ind_not]
@@ -147,7 +155,7 @@ def make_features_extended3(pandas_file, label_arr, set):
     subjettinesses[ind_not,0] = subjettinesses[ind_not,1] 
     subjettinesses[ind_not,1] = s[ind_not,0] 
     del s
-    if set=="kitchen_sink":
+    if set in ["kitchensink", ["kitchensink_super"]]:
         r = np.copy(ratios)
         ratios[ind_not,0] = ratios[ind_not,1] 
         ratios[ind_not,1] = r[ind_not,0] 
@@ -159,14 +167,16 @@ def make_features_extended3(pandas_file, label_arr, set):
         features = np.zeros((len(m_jj), 4+to_subjettiness*6))
         if set=="kitchensink":
             features = np.zeros((len(m_jj), 4+to_subjettiness*8-2))
+        elif set=="kitchensink_super":
+            features = np.zeros((len(m_jj), 4+to_subjettiness*6+(to_subjettiness-1)*6))
         features[:,0] = m_jj * 1e-3
         features[:,1] = features_j1[:, 3] * 1e-3
         features[:,2] = (features_j2[:, 3] - features_j1[:, 3]) *1e-3
-        features[:,3:3+subjettinesses.shape[-1]]= subjettinesses[:,0]
+        features[:,3:3+subjettinesses.shape[-1]] = subjettinesses[:,0]
         features[:,3+subjettinesses.shape[-1]:3+subjettinesses.shape[-1]*2]= subjettinesses[:,1]
-        if set=="kitchensink":
-            features[:,3+subjettinesses.shape[-1]*2:3+subjettinesses.shape[-1]*2+(to_subjettiness-1)] = ratios[:,0] 
-            features[:,3+subjettinesses.shape[-1]*2+(to_subjettiness-1) : 3+subjettinesses.shape[-1]*2+(to_subjettiness-1)*2] = ratios[:,1] 
+        if set in ["kitchensink", "kitchensink_super"]:
+            features[:,3+subjettinesses.shape[-1]*2:3+subjettinesses.shape[-1]*2+ratios.shape[-1]] = ratios[:,0] 
+            features[:,3+subjettinesses.shape[-1]*2+ratios.shape[-1] : 3+subjettinesses.shape[-1]*2+ratios.shape[-1]*2] = ratios[:,1] 
         features[:,-1] = label_arr
 
     return np.nan_to_num(features)
@@ -186,7 +196,7 @@ def file_loading(filename, args, labels=True, signal=0):
         features_j2 = np.array(pandas_file[['pxj2', 'pyj2', 'pzj2', 'mj2', 'tau1j2_1', 'tau2j2_1', 'tau3j2_1', 'tau4j2_1', 'tau5j2_1']], dtype=float)
         features = make_features_extended12(features_j1, features_j2, label_arr, args.input_set)
         del features_j1, features_j2
-    elif args.input_set in ["extended3","kitchensink"]:
+    elif args.input_set in ["extended3","kitchensink", "kitchensink_super"]:
         features = make_features_extended3(pandas_file, label_arr, args.input_set)
     del pandas_file
     return features
@@ -235,13 +245,13 @@ def classifier_data_prep(args, samples=None):
             sig_train = sig_train[sig_train[:,-1]==1]
         X_train = np.concatenate((samples_train, sig_train), axis=0)
         Y_train = X_train[:,-1]
-        if args.gaussian_inputs:
+        if args.gaussian_inputs is not None:
             gauss = np.random.normal(size=(len(X_train),args.inputs-args.N_normal_inputs))
             X_train = np.concatenate((X_train[:,1:args.N_normal_inputs+1],gauss), axis=1)
         else:
             X_train = X_train[:,1:args.inputs+1]
     elif args.mode=="IAD":
-        if args.gaussian_inputs:
+        if args.gaussian_inputs is not None:
             X_train = np.concatenate((innerdata[:120000,1:args.N_normal_inputs+1],samples_train[:,1:args.N_normal_inputs+1]),axis=0)
             gauss = np.random.normal(size=(len(X_train),args.inputs-args.N_normal_inputs))
             X_train = np.concatenate((X_train,gauss), axis=1)
@@ -254,7 +264,7 @@ def classifier_data_prep(args, samples=None):
 
     X_test = np.concatenate((extrabkg2,inner_extra_sig[:20000],extrabkg1[:40000]))
     Y_test = to_categorical(X_test[:,-1],2)
-    if args.gaussian_inputs:
+    if args.gaussian_inputs is not None:
         gauss = np.random.normal(size=(len(X_test),args.inputs-args.N_normal_inputs))
         X_test = np.concatenate((X_test[:,1:args.N_normal_inputs+1],gauss), axis=1)
     else:
