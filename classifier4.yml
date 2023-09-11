@@ -1,0 +1,11 @@
+activation: 'relu'
+hidden: 3
+lr: 1e-3
+dropout: 0
+l1: 0
+l2: 0
+beta_1: 0.9
+label_smoothing: 0
+batchsize: 128
+epochs: 100
+

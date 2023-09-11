@@ -6,6 +6,7 @@ import matplotlib.cm as col
 import seaborn as sns
 import argparse
 import warnings
+from pylab import *
 import os
 warnings.filterwarnings("ignore")
 
@@ -13,6 +14,8 @@ warnings.filterwarnings("ignore")
 parser = argparse.ArgumentParser(formatter_class=argparse.ArgumentDefaultsHelpFormatter)
 parser.add_argument('--directory', type=str, required=True)
 parser.add_argument('--scan_1D', default=False, action="store_true")
+parser.add_argument('--done_before', default=False, action="store_true")
+
 args = parser.parse_args()
 
 max_err=0.2
@@ -35,7 +38,7 @@ plt.rcParams['legend.title_fontsize'] = 12
 plt.rcParams['legend.fontsize'] = 12
 plt.rcParams['legend.frameon'] = False
 
-N_avg = [10, 50, None]
+N_avg = [10, 50]
 
 def make_one_array(twod_arr, new_arr):
     if len(new_arr) < len(twod_arr.T):
@@ -47,17 +50,24 @@ def make_one_array(twod_arr, new_arr):
     return np.concatenate((twod_arr, np.array([new_arr])),axis=0)
 
 def make_ROCs(folder, Y_test=None):
-    length=0
-    while os.path.exists(folder+"run"+str(length)+"/"):
-        length+=1
-    #length-=1
-    print(length)
-    
     if Y_test is None:
         Y_test = np.load(folder+"Y_test.npy")
-    preds = np.zeros((length, len(Y_test)))
-    for i in range(length):
-        preds[i] = np.load(folder+"run"+str(i)+"/preds.npy")
+    if args.done_before:
+        preds = np.load(folder+"preds_full.npy")
+        length = len(preds)
+        print(length)
+    else:
+        length=0
+        while os.path.exists(folder+"run"+str(length)+"/"):
+            length+=1
+        #length-=1
+        print(length)
+        
+        preds = np.zeros((length, len(Y_test)))
+        for i in range(length):
+            preds[i] = np.load(folder+"run"+str(i)+"/preds.npy")
+        
+        #np.save(folder+"preds_full.npy",preds)
     
     for e in N_avg:
         if e is None: 
@@ -72,11 +82,13 @@ def make_ROCs(folder, Y_test=None):
             else:
                 fpr_arr = make_one_array(fpr_arr, fpr)
                 tpr_arr = make_one_array(tpr_arr, tpr)
+        print(fpr_arr.nbytes/1e6)
+        print(e)
         np.save(folder+"fpr_"+str(e)+"_temp.npy", fpr_arr)
         np.save(folder+"tpr_"+str(e)+"_temp.npy", tpr_arr)
 
 if args.scan_1D:
-    for i in [0,100, 200, 300, 400, 500, 750, 1000, 1200, 1500, 2000]:
+    for i in [0, 100, 200, 300, 400, 500, 750, 1000, 1200, 1500, 2000]:
         make_ROCs(args.directory + "Nsig_"+str(i)+"/")
 else:
     make_ROCs(args.directory)

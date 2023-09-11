@@ -77,12 +77,16 @@ if args.gaussian_inputs is not None:
     args.inputs+=args.gaussian_inputs
 
 if args.scan_2D: 
+    if args.N_CR is None:
+        args.N_CR = args.N_bkg
     if not args.signal_significance:
         raise ValueError("need signal significance for 2D_scan")
 
 if args.signal_significance is not None:
     if not args.scan_2D: 
         raise ValueError("signal significance only supported for 2D_scan")
+    
+print(args)
 
 if not args.scan_2D:
     if not args.randomize_seed:

@@ -302,28 +302,29 @@ def data_prep_2D(args, samples=None):
         sig = data[data[:,-1]==1]
     bkg = data[data[:,-1]==0]
 
-    N_sig = args.signal_significance*np.sqrt(args.N_bkg)
+    extrabkg1 = extra_bkg[:312858]
+    extrabkg2 = extra_bkg[312858:]
+
+
+    N_sig = int(args.signal_significance*np.sqrt(args.N_bkg))
     innersig_mask = (sig[:,0]>args.minmass) & (sig[:,0]<args.maxmass)
     inner_sig = sig[innersig_mask]
     if N_sig > len(inner_sig)-20000:
         raise ValueError("not enough sig data")
     np.random.shuffle(inner_sig)
     inner_extra_sig = inner_sig[N_sig:]
-    data_all = np.concatenate((bkg,sig[:n_sig]),axis=0)
-    np.random.seed(args.set_seed)
-    np.random.shuffle(data_all)
-
-    extrabkg1 = extra_bkg[:312858]
-    extrabkg2 = extra_bkg[312858:]
-
+    #data_all = np.concatenate((bkg,sig[:N_sig]),axis=0)
+    innerbkg_mask = (bkg[:,0]>args.minmass) & (bkg[:,0]<args.maxmass)
+    innerbkg = bkg[innerbkg_mask]
+    innerbkg = np.concatenate((innerbkg, extrabkg1), axis=0)
+    np.random.shuffle(innerbkg)
 
     if args.N_bkg+args.N_CR > len(innerbkg):
         raise ValueError("not enough bkg data")
     data_train = np.concatenate((innerbkg[:args.N_bkg],inner_sig[:N_sig]),axis=0)
-    np.random.shuffle(data_train)
     samples_train = innerbkg[args.N_bkg:args.N_bkg+args.N_CR]
 
-    X_train = np.concatenate((data_train, samples_train), axis=0)
+    X_train = np.concatenate((data_train, samples_train), axis=0)[:,1:args.inputs+1]
     if args.mode=="supervised":
         Y_train = X_train[:,-1]
     elif args.mode=="IAD":

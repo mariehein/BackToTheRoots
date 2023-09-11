@@ -7,6 +7,9 @@ For all NN runs, the ensembling is performed externally, producing ROC curve fil
 ```
     python do_ensemble_NN.py --directory "results/NN_to_be_ensembled/"
 ```
+
+Note: for 1D scan loop is possible in program using option --scan_1D
+
 ## Different runs for paper:
 
 ### Baseline performances:
@@ -42,7 +45,6 @@ Performed for:
 
 Performed for:
 - X = "BDT" and A in ["baseline", "extended3", "kitchensink"]
-- X = "NN" and A = "baseline"
 
 ```
     sig = (0 100 200 300 400 500 750 1000 1200 1500 2000)
@@ -50,6 +52,16 @@ Performed for:
         python run_pipeline.py --mode "IAD" --classifier X  --input_set A  --randomize_seed --signal_number ${s} --directory "results/1D_Nsig_X_A/Nsig_${s}/"
     done
 ```
+
+Performed for: 
+- X = "NN" and A = "baseline"
+```
+    sig = (0 100 200 300 400 500 750 1000 1200 1500 2000)
+    for ((i=1; i<12; i++)); do
+        python run_pipeline.py --mode "IAD" --classifier X  --input_set A  --set_seed ${i} --signal_number ${sig[i]} --directory "results/1D_Nsig_X_A/Nsig_${s}/"
+    done
+```
+
 
 ### 2D scan
 
@@ -63,7 +75,7 @@ Performed for:
 
     for b in ${bkg}; do
         for s in ${sig} do
-            python run_pipeline.py --mode "IAD" --classifier X --input_set A --randomize_seed --2D_scan --signal_significance ${s} --N_bkg ${b} --directory "results/2D_X_A/${b}_${b}_${s}/"
+            python run_pipeline.py --mode "IAD" --classifier X --input_set A --randomize_seed --scan_2D --signal_significance ${s} --N_bkg ${b} --directory "results/2D_X_A/${b}_${b}_${s}/"
         done
     done
 ```
