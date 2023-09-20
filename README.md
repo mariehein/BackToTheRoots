@@ -44,7 +44,7 @@ Performed for:
 ### 1D scan for classifier X and input_set A:
 
 Performed for:
-- X = "BDT" and A in ["baseline", "extended3", "kitchensink"]
+- X = "BDT" and A in ["baseline", "extended3"]
 
 ```
     sig = (0 100 200 300 400 500 750 1000 1200 1500 2000)
@@ -67,7 +67,7 @@ Performed for:
 
 Performed for:
 - X = "BDT"
-- A in ["baseline", "kitchensink"]
+- A in ["baseline", "extended3"]
 
 ```
     bkg=(25000 50000 75000 100000 125000 150000 175000 200000)
