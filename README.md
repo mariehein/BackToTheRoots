@@ -1,5 +1,9 @@
 # How to produce paper results
 
+## Data
+
+The dataset needed to produce these results can be found in https://github.com/uhh-pd-ml/treebased_anomaly_detection. 
+
 ## NN runs:
 
 For all NN runs, the ensembling is performed externally, producing ROC curve files for an ensemble of 10 and 50 NNs. For this do: 
@@ -78,4 +82,14 @@ Performed for:
             python run_pipeline.py --mode "IAD" --classifier X --input_set A --randomize_seed --scan_2D --signal_significance ${s} --N_bkg ${b} --directory "results/2D_X_A/${b}_${b}_${s}/"
         done
     done
+```
+
+### Three pronged signal for classifier X and input_set A:
+
+Performed for:
+- X in ["BDT", "NN"]
+- A in ["baseline", "extended1", "extended2", "extended3"]
+
+```
+    python run_pipeline.py --mode "IAD" --classifier X --input_set A --three_pronged --directory "results/IAD_X_A/" 
 ```
